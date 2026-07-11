@@ -1,0 +1,15 @@
+# Banco de dados H2
+data/
+
+# VS Code
+.vscode/
+
+# IntelliJ
+.idea/
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
