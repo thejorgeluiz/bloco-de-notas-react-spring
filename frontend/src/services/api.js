@@ -51,3 +51,15 @@ export async function atualizarNota(id, texto) {
 
   return resposta.json();
 }
+
+export async function alternarFixacao(id) {
+  const resposta = await fetch(`${API_URL}/${id}/fixar`, {
+    method: "PUT",
+  });
+
+  if (!resposta.ok) {
+    throw new Error("Não foi possível alterar a fixação da nota.");
+  }
+
+  return resposta.json();
+}

@@ -2,6 +2,7 @@ package bloco_notas.demo;
 
 import java.time.LocalDateTime;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -21,10 +22,19 @@ public class Nota {
 public LocalDateTime getDataCriacao() {
     return dataCriacao;
 }
+@Column(nullable = false)
+private Boolean fixada = false;
 
     private LocalDateTime dataCriacao;
 
     private String texto;
+public Boolean getFixada() {
+    return fixada;
+}
+
+public void setFixada(Boolean fixada) {
+    this.fixada = fixada;
+}
 
     public Long getId() {
         return id;

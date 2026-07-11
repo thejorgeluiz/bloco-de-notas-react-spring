@@ -5,6 +5,7 @@ import {
   criarNota,
   excluirNota,
   atualizarNota,
+  alternarFixacao,
 } from "./services/api";
 import FormularioNota from "./components/FormularioNota";
 import ListaNotas from "./components/ListaNotas";
@@ -12,7 +13,14 @@ import ListaNotas from "./components/ListaNotas";
 function App() {
   const [texto, setTexto] = useState("");
   const [notas, setNotas] = useState([]);
+  const [busca, setBusca] = useState("");
   const [idEditando, setIdEditando] = useState(null);
+
+  async function fixarNota(id) {
+    await alternarFixacao(id);
+    carregarNotas();
+  }
+
   async function salvarNota() {
     if (texto.trim() === "") {
       alert("Digite uma nota antes de salvar.");
@@ -64,6 +72,14 @@ function App() {
     carregarNotas();
   }, []);
 
+  const notasFiltradas = notas.filter((nota) =>
+    nota.texto.toLowerCase().includes(busca.toLowerCase()),
+  );
+
+  const notasOrdenadas = [...notasFiltradas].sort(
+    (a, b) => Number(b.fixada) - Number(a.fixada),
+  );
+
   return (
     <div className="container mt-5">
       <h1 className="text-center mb-4">Bloco de Notas</h1>
@@ -77,11 +93,18 @@ function App() {
       />
 
       <hr />
-
+      <input
+        type="text"
+        className="form-control mt-4"
+        placeholder="Buscar nota..."
+        value={busca}
+        onChange={(e) => setBusca(e.target.value)}
+      />
       <ListaNotas
-        notas={notas}
+        notas={notasOrdenadas}
         editarNota={editarNota}
         removerNota={removerNota}
+        fixarNota={fixarNota}
       />
     </div>
   );

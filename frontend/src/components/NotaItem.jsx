@@ -1,4 +1,6 @@
-function NotaItem({ nota, editarNota, removerNota }) {
+import Dropdown from "react-bootstrap/Dropdown";
+
+function NotaItem({ nota, editarNota, removerNota, fixarNota }) {
   return (
     <li className="list-group-item d-flex justify-content-between align-items-center">
       <div>
@@ -9,21 +11,30 @@ function NotaItem({ nota, editarNota, removerNota }) {
         </small>
       </div>
 
-      <div>
-        <button
-          className="btn btn-warning btn-sm me-2"
-          onClick={() => editarNota(nota.id, nota.texto)}
-        >
-          Editar
-        </button>
+      <Dropdown align="end">
+        <Dropdown.Toggle variant="light" size="sm" aria-label="Ações da nota">
+          ⋮
+        </Dropdown.Toggle>
 
-        <button
-          className="btn btn-danger btn-sm"
-          onClick={() => removerNota(nota.id)}
-        >
-          Excluir
-        </button>
-      </div>
+        <Dropdown.Menu>
+          <Dropdown.Item onClick={() => fixarNota(nota.id)}>
+            {nota.fixada ? "📌 Desafixar" : "📍 Fixar"}
+          </Dropdown.Item>
+
+          <Dropdown.Item onClick={() => editarNota(nota.id, nota.texto)}>
+            ✏️ Editar
+          </Dropdown.Item>
+
+          <Dropdown.Divider />
+
+          <Dropdown.Item
+            className="text-danger"
+            onClick={() => removerNota(nota.id)}
+          >
+            🗑️ Excluir
+          </Dropdown.Item>
+        </Dropdown.Menu>
+      </Dropdown>
     </li>
   );
 }

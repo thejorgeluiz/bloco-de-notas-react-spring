@@ -1,6 +1,6 @@
 import NotaItem from "./NotaItem";
 
-function ListaNotas({ notas, editarNota, removerNota }) {
+function ListaNotas({ notas, editarNota, removerNota, fixarNota }) {
   return (
     <>
       <h3>Notas</h3>
@@ -12,6 +12,7 @@ function ListaNotas({ notas, editarNota, removerNota }) {
             nota={nota}
             editarNota={editarNota}
             removerNota={removerNota}
+            fixarNota={fixarNota}
           />
         ))}
       </ul>

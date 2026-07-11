@@ -9,6 +9,14 @@ import java.util.List;
 @RestController
 @RequestMapping("/notas")
 public class NotaController {
+  @PutMapping("/{id}/fixar")
+public Nota alternarFixacao(@PathVariable Long id) {
+    Nota nota = repository.findById(id).orElseThrow();
+
+    nota.setFixada(!Boolean.TRUE.equals(nota.getFixada()));
+
+    return repository.save(nota);
+}
 
     @Autowired
     private NotaRepository repository;
