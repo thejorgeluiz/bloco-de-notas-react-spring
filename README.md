@@ -9,7 +9,7 @@ Aplicação Full Stack desenvolvida com React e Spring Boot para gerenciamento d
 - Java
 - Spring Boot
 - Spring Data JPA
-- H2 Database
+- PostgreSQL
 
 ## ✨ Funcionalidades
 
@@ -25,6 +25,14 @@ Aplicação Full Stack desenvolvida com React e Spring Boot para gerenciamento d
 ```bash
 cd backend
 ./mvnw spring-boot:run
+```
+
+### Configuração do banco
+
+Antes de iniciar o backend, configure a variável de ambiente da senha do PostgreSQL:
+
+```powershell
+$env:DB_PASSWORD="sua_senha_do_postgresql"
 ```
 
 ### Frontend
