@@ -1,63 +1,63 @@
 import "./App.css";
 import { useEffect, useState } from "react";
+import {
+  listarNotas,
+  criarNota,
+  excluirNota,
+  atualizarNota,
+} from "./services/api";
+import FormularioNota from "./components/FormularioNota";
+import ListaNotas from "./components/ListaNotas";
 
 function App() {
   const [texto, setTexto] = useState("");
   const [notas, setNotas] = useState([]);
+  const [idEditando, setIdEditando] = useState(null);
   async function salvarNota() {
-    const resposta = await fetch("http://localhost:8080/notas", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        texto: texto,
-      }),
-    });
+    if (texto.trim() === "") {
+      alert("Digite uma nota antes de salvar.");
+      return;
+    }
 
-    const nota = await resposta.json();
-
-    console.log(nota);
+    if (idEditando !== null) {
+      await atualizarNota(idEditando, texto);
+      setIdEditando(null);
+    } else {
+      await criarNota(texto);
+    }
 
     setTexto("");
-
     carregarNotas();
   }
 
   async function carregarNotas() {
-    const resposta = await fetch("http://localhost:8080/notas");
-
-    const dados = await resposta.json();
+    const dados = await listarNotas();
 
     setNotas(dados);
   }
 
-  async function excluirNota(id) {
-    await fetch(`http://localhost:8080/notas/${id}`, {
-      method: "DELETE",
-    });
+  async function removerNota(id) {
+    const confirmar = window.confirm(
+      "Tem certeza que deseja excluir esta nota?",
+    );
+
+    if (!confirmar) {
+      return;
+    }
+
+    await excluirNota(id);
 
     carregarNotas();
   }
 
-  async function atualizarNota(id, textoAtual) {
-    const novoTexto = prompt("Digite o novo texto:", textoAtual);
+  function editarNota(id, textoAtual) {
+    setIdEditando(id);
+    setTexto(textoAtual);
+  }
 
-    if (novoTexto === null) {
-      return;
-    }
-
-    await fetch(`http://localhost:8080/notas/${id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        texto: novoTexto,
-      }),
-    });
-
-    carregarNotas();
+  function cancelarEdicao() {
+    setIdEditando(null);
+    setTexto("");
   }
 
   useEffect(() => {
@@ -68,46 +68,21 @@ function App() {
     <div className="container mt-5">
       <h1 className="text-center mb-4">Bloco de Notas</h1>
 
-      <textarea
-        className="form-control"
-        rows="5"
-        value={texto}
-        onChange={(e) => setTexto(e.target.value)}
-      ></textarea>
-
-      <button className="btn btn-primary mt-3" onClick={salvarNota}>
-        Salvar
-      </button>
+      <FormularioNota
+        texto={texto}
+        setTexto={setTexto}
+        salvarNota={salvarNota}
+        idEditando={idEditando}
+        cancelarEdicao={cancelarEdicao}
+      />
 
       <hr />
 
-      <h3>Notas</h3>
-      <ul className="list-group mt-3">
-        {notas.map((nota) => (
-          <li
-            key={nota.id}
-            className="list-group-item d-flex justify-content-between align-items-center"
-          >
-            {nota.texto}
-
-            <div>
-              <button
-                className="btn btn-warning btn-sm me-2"
-                onClick={() => atualizarNota(nota.id, nota.texto)}
-              >
-                Editar
-              </button>
-
-              <button
-                className="btn btn-danger btn-sm"
-                onClick={() => excluirNota(nota.id)}
-              >
-                Excluir
-              </button>
-            </div>
-          </li>
-        ))}
-      </ul>
+      <ListaNotas
+        notas={notas}
+        editarNota={editarNota}
+        removerNota={removerNota}
+      />
     </div>
   );
 }
