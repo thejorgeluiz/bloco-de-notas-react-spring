@@ -26,7 +26,7 @@ public LocalDateTime getDataCriacao() {
 private Boolean fixada = false;
 
     private LocalDateTime dataCriacao;
-
+@Column(columnDefinition = "TEXT", nullable = false)
     private String texto;
 public Boolean getFixada() {
     return fixada;
