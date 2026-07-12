@@ -63,3 +63,36 @@ export async function alternarFixacao(id) {
 
   return resposta.json();
 }
+
+// lixeira
+export async function listarLixeira() {
+  const resposta = await fetch(`${API_URL}/lixeira`);
+
+  if (!resposta.ok) {
+    throw new Error("Não foi possível carregar a lixeira.");
+  }
+
+  return resposta.json();
+}
+
+export async function restaurarNota(id) {
+  const resposta = await fetch(`${API_URL}/${id}/restaurar`, {
+    method: "PUT",
+  });
+
+  if (!resposta.ok) {
+    throw new Error("Não foi possível restaurar a nota.");
+  }
+
+  return resposta.json();
+}
+
+export async function excluirNotaDefinitivamente(id) {
+  const resposta = await fetch(`${API_URL}/${id}/definitivo`, {
+    method: "DELETE",
+  });
+
+  if (!resposta.ok) {
+    throw new Error("Não foi possível excluir a nota definitivamente.");
+  }
+}

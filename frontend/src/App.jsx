@@ -1,5 +1,6 @@
 import "./App.css";
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   listarNotas,
   criarNota,
@@ -82,7 +83,13 @@ function App() {
 
   return (
     <div className="container mt-5">
-      <h1 className="text-center mb-4">Bloco de Notas</h1>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h1 className="mb-0">Bloco de Notas</h1>
+
+        <Link to="/lixeira" className="btn btn-outline-danger">
+          🗑️ Lixeira
+        </Link>
+      </div>
 
       <FormularioNota
         texto={texto}

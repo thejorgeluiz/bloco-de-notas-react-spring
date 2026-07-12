@@ -9,7 +9,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 
-@Entity //"Esta classe deve virar uma tabela no banco."
+@Entity //Esta classe deve virar uma tabela no banco.
 public class Nota {
 
     @Id //É a chave primária da tabela.
@@ -24,6 +24,27 @@ public LocalDateTime getDataCriacao() {
 }
 @Column(nullable = false)
 private Boolean fixada = false;
+
+  @Column(nullable = false)
+private Boolean excluida = false;
+
+private LocalDateTime dataExclusao;
+
+public Boolean getExcluida() {
+    return excluida;
+}
+
+public void setExcluida(Boolean excluida) {
+    this.excluida = excluida;
+}
+
+public LocalDateTime getDataExclusao() {
+    return dataExclusao;
+}
+
+public void setDataExclusao(LocalDateTime dataExclusao) {
+    this.dataExclusao = dataExclusao;
+}
 
     private LocalDateTime dataCriacao;
 @Column(columnDefinition = "TEXT", nullable = false)
