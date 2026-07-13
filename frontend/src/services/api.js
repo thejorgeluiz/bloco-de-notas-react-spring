@@ -1,4 +1,5 @@
-const API_URL = "http://localhost:8080/notas";
+//const API_URL = "http://localhost:8080/notas";
+const API_URL = `${import.meta.env.VITE_API_URL}/notas`;
 
 export async function listarNotas() {
   const resposta = await fetch(API_URL);
