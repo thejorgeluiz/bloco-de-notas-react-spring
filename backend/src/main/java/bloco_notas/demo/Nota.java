@@ -9,53 +9,32 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 
-@Entity //Esta classe deve virar uma tabela no banco.
+@Entity
 public class Nota {
 
-    @Id //É a chave primária da tabela.
+    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @PrePersist
-    public void prePersist() {
-    dataCriacao = LocalDateTime.now();
-}
-public LocalDateTime getDataCriacao() {
-    return dataCriacao;
-}
-@Column(nullable = false)
-private Boolean fixada = false;
 
-  @Column(nullable = false)
-private Boolean excluida = false;
+    @Column(columnDefinition = "TEXT", nullable = false)
+    private String texto;
 
-private LocalDateTime dataExclusao;
+    @Column(nullable = false)
+    private Boolean fixada = false;
 
-public Boolean getExcluida() {
-    return excluida;
-}
-
-public void setExcluida(Boolean excluida) {
-    this.excluida = excluida;
-}
-
-public LocalDateTime getDataExclusao() {
-    return dataExclusao;
-}
-
-public void setDataExclusao(LocalDateTime dataExclusao) {
-    this.dataExclusao = dataExclusao;
-}
+    @Column(nullable = false)
+    private Boolean excluida = false;
 
     private LocalDateTime dataCriacao;
-@Column(columnDefinition = "TEXT", nullable = false)
-    private String texto;
-public Boolean getFixada() {
-    return fixada;
-}
 
-public void setFixada(Boolean fixada) {
-    this.fixada = fixada;
-}
+    private LocalDateTime dataAtualizacao;
+
+    private LocalDateTime dataExclusao;
+
+    @PrePersist
+    public void prePersist() {
+        dataCriacao = LocalDateTime.now();
+    }
 
     public Long getId() {
         return id;
@@ -67,5 +46,41 @@ public void setFixada(Boolean fixada) {
 
     public void setTexto(String texto) {
         this.texto = texto;
+    }
+
+    public Boolean getFixada() {
+        return fixada;
+    }
+
+    public void setFixada(Boolean fixada) {
+        this.fixada = fixada;
+    }
+
+    public Boolean getExcluida() {
+        return excluida;
+    }
+
+    public void setExcluida(Boolean excluida) {
+        this.excluida = excluida;
+    }
+
+    public LocalDateTime getDataCriacao() {
+        return dataCriacao;
+    }
+
+    public LocalDateTime getDataAtualizacao() {
+        return dataAtualizacao;
+    }
+
+    public void setDataAtualizacao(LocalDateTime dataAtualizacao) {
+        this.dataAtualizacao = dataAtualizacao;
+    }
+
+    public LocalDateTime getDataExclusao() {
+        return dataExclusao;
+    }
+
+    public void setDataExclusao(LocalDateTime dataExclusao) {
+        this.dataExclusao = dataExclusao;
     }
 }

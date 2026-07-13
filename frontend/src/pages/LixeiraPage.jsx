@@ -1,25 +1,42 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+
 import {
+  excluirNotaDefinitivamente,
   listarLixeira,
   restaurarNota,
-  excluirNotaDefinitivamente,
 } from "../services/api";
+
+import BarraTopo from "../components/BarraTopo";
+import Notificacao from "../components/Notificacao";
+import NotaExcluidaItem from "../components/NotaExcluidaItem";
 
 function LixeiraPage() {
   const [notas, setNotas] = useState([]);
   const [carregando, setCarregando] = useState(true);
-  const [erro, setErro] = useState("");
+
+  const [notificacao, setNotificacao] = useState({
+    mostrar: false,
+    mensagem: "",
+    tipo: "success",
+  });
+
+  function exibirNotificacao(mensagem, tipo = "success") {
+    setNotificacao({
+      mostrar: true,
+      mensagem,
+      tipo,
+    });
+  }
 
   async function carregarLixeira() {
     try {
       setCarregando(true);
-      setErro("");
 
       const dados = await listarLixeira();
       setNotas(dados);
     } catch (error) {
-      setErro(error.message);
+      exibirNotificacao(error.message, "danger");
     } finally {
       setCarregando(false);
     }
@@ -28,9 +45,11 @@ function LixeiraPage() {
   async function restaurar(id) {
     try {
       await restaurarNota(id);
-      carregarLixeira();
+      await carregarLixeira();
+
+      exibirNotificacao("Nota restaurada com sucesso!", "success");
     } catch (error) {
-      setErro(error.message);
+      exibirNotificacao(error.message, "danger");
     }
   }
 
@@ -45,9 +64,11 @@ function LixeiraPage() {
 
     try {
       await excluirNotaDefinitivamente(id);
-      carregarLixeira();
+      await carregarLixeira();
+
+      exibirNotificacao("Nota excluída definitivamente.", "success");
     } catch (error) {
-      setErro(error.message);
+      exibirNotificacao(error.message, "danger");
     }
   }
 
@@ -56,64 +77,61 @@ function LixeiraPage() {
   }, []);
 
   return (
-    <div className="container mt-5">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h1>🗑️ Lixeira</h1>
+    <>
+      <BarraTopo />
 
-        <Link to="/" className="btn btn-outline-primary">
-          ← Voltar para as notas
-        </Link>
-      </div>
+      <main className="container py-5">
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <h1 className="h2 mb-0">🗑️ Lixeira</h1>
 
-      {erro && <div className="alert alert-danger">{erro}</div>}
-
-      {carregando && (
-        <div className="text-center my-5">
-          <div className="spinner-border text-primary" role="status">
-            <span className="visually-hidden">Carregando...</span>
-          </div>
-
-          <p className="mt-2">Carregando lixeira...</p>
+          <Link to="/" className="btn btn-outline-primary">
+            ← Voltar
+          </Link>
         </div>
-      )}
 
-      {!carregando && notas.length === 0 && (
-        <div className="alert alert-secondary text-center">
-          A lixeira está vazia.
-        </div>
-      )}
-
-      {!carregando && notas.length > 0 && (
-        <div className="list-group">
-          {notas.map((nota) => (
-            <div className="list-group-item" key={nota.id}>
-              <p className="mb-2">{nota.texto}</p>
-
-              <small className="text-muted d-block mb-3">
-                Excluída em{" "}
-                {new Date(nota.dataExclusao).toLocaleString("pt-BR")}
-              </small>
-
-              <button
-                type="button"
-                className="btn btn-success btn-sm me-2"
-                onClick={() => restaurar(nota.id)}
-              >
-                Restaurar
-              </button>
-
-              <button
-                type="button"
-                className="btn btn-danger btn-sm"
-                onClick={() => excluirDefinitivamente(nota.id)}
-              >
-                Excluir definitivamente
-              </button>
+        {carregando && (
+          <div className="text-center my-5">
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">Carregando...</span>
             </div>
-          ))}
-        </div>
-      )}
-    </div>
+
+            <p className="mt-2">Carregando lixeira...</p>
+          </div>
+        )}
+
+        {!carregando && notas.length === 0 && (
+          <div className="alert alert-secondary text-center">
+            A lixeira está vazia.
+          </div>
+        )}
+
+        {!carregando && notas.length > 0 && (
+          <div className="row g-3">
+            {notas.map((nota) => (
+              <div className="col-12 col-md-6 col-lg-4" key={nota.id}>
+                <NotaExcluidaItem
+                  nota={nota}
+                  restaurar={restaurar}
+                  excluirDefinitivamente={excluirDefinitivamente}
+                />
+              </div>
+            ))}
+          </div>
+        )}
+      </main>
+
+      <Notificacao
+        mostrar={notificacao.mostrar}
+        mensagem={notificacao.mensagem}
+        tipo={notificacao.tipo}
+        aoFechar={() =>
+          setNotificacao((notificacaoAtual) => ({
+            ...notificacaoAtual,
+            mostrar: false,
+          }))
+        }
+      />
+    </>
   );
 }
 

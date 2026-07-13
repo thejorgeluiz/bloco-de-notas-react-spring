@@ -1,6 +1,5 @@
-import "./App.css";
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+
 import {
   listarNotas,
   criarNota,
@@ -8,60 +7,115 @@ import {
   atualizarNota,
   alternarFixacao,
 } from "./services/api";
+
+import BarraTopo from "./components/BarraTopo";
 import FormularioNota from "./components/FormularioNota";
 import ListaNotas from "./components/ListaNotas";
+import Notificacao from "./components/Notificacao";
 
 function App() {
   const [texto, setTexto] = useState("");
   const [notas, setNotas] = useState([]);
   const [busca, setBusca] = useState("");
   const [idEditando, setIdEditando] = useState(null);
+  const [salvando, setSalvando] = useState(false);
 
-  async function fixarNota(id) {
-    await alternarFixacao(id);
-    carregarNotas();
+  const [notificacao, setNotificacao] = useState({
+    mostrar: false,
+    mensagem: "",
+    tipo: "success",
+  });
+
+  function exibirNotificacao(mensagem, tipo = "success") {
+    setNotificacao({
+      mostrar: true,
+      mensagem,
+      tipo,
+    });
+  }
+
+  async function carregarNotas() {
+    try {
+      const dados = await listarNotas();
+      setNotas(dados);
+    } catch (error) {
+      exibirNotificacao(error.message, "danger");
+    }
   }
 
   async function salvarNota() {
     if (texto.trim() === "") {
-      alert("Digite uma nota antes de salvar.");
+      exibirNotificacao("Digite uma nota antes de salvar.", "warning");
       return;
     }
 
-    if (idEditando !== null) {
-      await atualizarNota(idEditando, texto);
-      setIdEditando(null);
-    } else {
-      await criarNota(texto);
-    }
+    try {
+      setSalvando(true);
 
-    setTexto("");
-    carregarNotas();
+      if (idEditando !== null) {
+        await atualizarNota(idEditando, texto);
+        setIdEditando(null);
+
+        exibirNotificacao("Nota atualizada com sucesso!", "success");
+      } else {
+        await criarNota(texto);
+
+        exibirNotificacao("Nota criada com sucesso!", "success");
+      }
+
+      setTexto("");
+      await carregarNotas();
+    } catch (error) {
+      exibirNotificacao(error.message, "danger");
+    } finally {
+      setSalvando(false);
+    }
   }
 
-  async function carregarNotas() {
-    const dados = await listarNotas();
+  async function fixarNota(id) {
+    try {
+      const notaAtualizada = await alternarFixacao(id);
 
-    setNotas(dados);
+      await carregarNotas();
+
+      exibirNotificacao(
+        notaAtualizada.fixada
+          ? "Nota fixada com sucesso!"
+          : "Nota desafixada com sucesso!",
+        "success",
+      );
+    } catch (error) {
+      exibirNotificacao(error.message, "danger");
+    }
   }
 
   async function removerNota(id) {
     const confirmar = window.confirm(
-      "Tem certeza que deseja excluir esta nota?",
+      "Tem certeza que deseja mover esta nota para a lixeira?",
     );
 
     if (!confirmar) {
       return;
     }
 
-    await excluirNota(id);
+    try {
+      await excluirNota(id);
+      await carregarNotas();
 
-    carregarNotas();
+      exibirNotificacao("Nota movida para a lixeira!", "success");
+    } catch (error) {
+      exibirNotificacao(error.message, "danger");
+    }
   }
 
   function editarNota(id, textoAtual) {
     setIdEditando(id);
     setTexto(textoAtual);
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
   }
 
   function cancelarEdicao() {
@@ -76,44 +130,64 @@ function App() {
   const notasFiltradas = notas.filter((nota) =>
     nota.texto.toLowerCase().includes(busca.toLowerCase()),
   );
+  const notasOrdenadas = [...notasFiltradas].sort((a, b) => {
+    const diferencaFixacao = Number(b.fixada) - Number(a.fixada);
 
-  const notasOrdenadas = [...notasFiltradas].sort(
-    (a, b) => Number(b.fixada) - Number(a.fixada),
-  );
+    if (diferencaFixacao !== 0) {
+      return diferencaFixacao;
+    }
+
+    const dataA = new Date(a.dataAtualizacao || a.dataCriacao).getTime();
+
+    const dataB = new Date(b.dataAtualizacao || b.dataCriacao).getTime();
+
+    return dataB - dataA;
+  });
 
   return (
-    <div className="container mt-5">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h1 className="mb-0">Bloco de Notas</h1>
+    <>
+      <BarraTopo />
 
-        <Link to="/lixeira" className="btn btn-outline-danger">
-          🗑️ Lixeira
-        </Link>
-      </div>
+      <main className="container py-5">
+        <FormularioNota
+          texto={texto}
+          setTexto={setTexto}
+          salvarNota={salvarNota}
+          idEditando={idEditando}
+          cancelarEdicao={cancelarEdicao}
+          salvando={salvando}
+        />
 
-      <FormularioNota
-        texto={texto}
-        setTexto={setTexto}
-        salvarNota={salvarNota}
-        idEditando={idEditando}
-        cancelarEdicao={cancelarEdicao}
-      />
+        <hr />
 
-      <hr />
-      <input
-        type="text"
-        className="form-control mt-4"
-        placeholder="Buscar nota..."
-        value={busca}
-        onChange={(e) => setBusca(e.target.value)}
+        <input
+          type="text"
+          className="form-control mt-4"
+          placeholder="Buscar nota..."
+          value={busca}
+          onChange={(evento) => setBusca(evento.target.value)}
+        />
+
+        <ListaNotas
+          notas={notasOrdenadas}
+          editarNota={editarNota}
+          removerNota={removerNota}
+          fixarNota={fixarNota}
+        />
+      </main>
+
+      <Notificacao
+        mostrar={notificacao.mostrar}
+        mensagem={notificacao.mensagem}
+        tipo={notificacao.tipo}
+        aoFechar={() =>
+          setNotificacao((notificacaoAtual) => ({
+            ...notificacaoAtual,
+            mostrar: false,
+          }))
+        }
       />
-      <ListaNotas
-        notas={notasOrdenadas}
-        editarNota={editarNota}
-        removerNota={removerNota}
-        fixarNota={fixarNota}
-      />
-    </div>
+    </>
   );
 }
 

@@ -4,6 +4,7 @@ function FormularioNota({
   salvarNota,
   idEditando,
   cancelarEdicao,
+  salvando,
 }) {
   return (
     <>
@@ -11,18 +12,39 @@ function FormularioNota({
         className="form-control"
         rows="5"
         value={texto}
-        onChange={(e) => setTexto(e.target.value)}
+        onChange={(evento) => setTexto(evento.target.value)}
         placeholder="Digite sua nota"
+        disabled={salvando}
       />
 
-      <button className="btn btn-primary mt-3" onClick={salvarNota}>
-        {idEditando !== null ? "Atualizar" : "Salvar"}
+      <button
+        type="button"
+        className="btn btn-primary mt-3"
+        onClick={salvarNota}
+        disabled={salvando}
+      >
+        {salvando ? (
+          <>
+            <span
+              className="spinner-border spinner-border-sm me-2"
+              aria-hidden="true"
+            />
+
+            {idEditando !== null ? "Atualizando..." : "Salvando..."}
+          </>
+        ) : idEditando !== null ? (
+          "Atualizar"
+        ) : (
+          "Salvar"
+        )}
       </button>
 
       {idEditando !== null && (
         <button
+          type="button"
           className="btn btn-secondary mt-3 ms-2"
           onClick={cancelarEdicao}
+          disabled={salvando}
         >
           Cancelar
         </button>
