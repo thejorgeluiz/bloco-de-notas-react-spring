@@ -1,99 +1,194 @@
-//const API_URL = "http://localhost:8080/notas";
-const API_URL = `${import.meta.env.VITE_API_URL}/notas`;
+const BASE_URL = import.meta.env.VITE_API_URL;
+const NOTAS_URL = `${BASE_URL}/notas`;
+const AUTH_URL = `${BASE_URL}/auth`;
 
-export async function listarNotas() {
-  const resposta = await fetch(API_URL);
+function obterToken() {
+  return localStorage.getItem("token");
+}
 
-  if (!resposta.ok) {
-    throw new Error("Não foi possível carregar as notas.");
+function criarHeaders(comJson = false) {
+  const headers = {};
+
+  if (comJson) {
+    headers["Content-Type"] = "application/json";
   }
 
-  return resposta.json();
+  const token = obterToken();
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  return headers;
+}
+
+async function processarResposta(resposta, mensagemPadrao) {
+  if (!resposta.ok) {
+    let mensagem = mensagemPadrao;
+
+    try {
+      const erro = await resposta.json();
+
+      mensagem = erro.mensagem || erro.detail || erro.message || mensagemPadrao;
+    } catch {
+      // Mantém a mensagem padrão se a resposta não possuir JSON.
+    }
+
+    throw new Error(mensagem);
+  }
+
+  if (resposta.status === 204) {
+    return null;
+  }
+
+  const conteudo = await resposta.text();
+
+  return conteudo ? JSON.parse(conteudo) : null;
+}
+
+export async function cadastrarUsuario(nome, email, senha) {
+  const resposta = await fetch(`${AUTH_URL}/cadastro`, {
+    method: "POST",
+    headers: criarHeaders(true),
+    body: JSON.stringify({
+      nome,
+      email,
+      senha,
+    }),
+  });
+
+  return processarResposta(resposta, "Não foi possível realizar o cadastro.");
+}
+
+export async function loginUsuario(email, senha) {
+  const resposta = await fetch(`${AUTH_URL}/login`, {
+    method: "POST",
+    headers: criarHeaders(true),
+    body: JSON.stringify({
+      email,
+      senha,
+    }),
+  });
+
+  const dados = await processarResposta(
+    resposta,
+    "Não foi possível realizar o login.",
+  );
+
+  localStorage.setItem("token", dados.token);
+  localStorage.setItem("usuario", JSON.stringify(dados.usuario));
+
+  return dados;
+}
+
+export async function buscarPerfil() {
+  const resposta = await fetch(`${AUTH_URL}/perfil`, {
+    headers: criarHeaders(),
+  });
+
+  return processarResposta(resposta, "Não foi possível carregar o perfil.");
+}
+
+export function obterUsuarioLogado() {
+  const usuario = localStorage.getItem("usuario");
+
+  if (!usuario) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(usuario);
+  } catch {
+    return null;
+  }
+}
+
+export function usuarioEstaLogado() {
+  return Boolean(obterToken());
+}
+
+export function sair() {
+  localStorage.removeItem("token");
+  localStorage.removeItem("usuario");
+}
+
+export async function listarNotas() {
+  const resposta = await fetch(NOTAS_URL, {
+    headers: criarHeaders(),
+  });
+
+  return processarResposta(resposta, "Não foi possível carregar as notas.");
 }
 
 export async function criarNota(texto) {
-  const resposta = await fetch(API_URL, {
+  const resposta = await fetch(NOTAS_URL, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: criarHeaders(true),
     body: JSON.stringify({ texto }),
   });
 
-  if (!resposta.ok) {
-    throw new Error("Não foi possível criar a nota.");
-  }
-
-  return resposta.json();
-}
-
-export async function excluirNota(id) {
-  const resposta = await fetch(`${API_URL}/${id}`, {
-    method: "DELETE",
-  });
-
-  if (!resposta.ok) {
-    throw new Error("Não foi possível excluir a nota.");
-  }
+  return processarResposta(resposta, "Não foi possível criar a nota.");
 }
 
 export async function atualizarNota(id, texto) {
-  const resposta = await fetch(`${API_URL}/${id}`, {
+  const resposta = await fetch(`${NOTAS_URL}/${id}`, {
     method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: criarHeaders(true),
     body: JSON.stringify({ texto }),
   });
 
-  if (!resposta.ok) {
-    throw new Error("Não foi possível atualizar a nota.");
-  }
-
-  return resposta.json();
+  return processarResposta(resposta, "Não foi possível atualizar a nota.");
 }
 
 export async function alternarFixacao(id) {
-  const resposta = await fetch(`${API_URL}/${id}/fixar`, {
+  const resposta = await fetch(`${NOTAS_URL}/${id}/fixar`, {
     method: "PUT",
+    headers: criarHeaders(),
   });
 
-  if (!resposta.ok) {
-    throw new Error("Não foi possível alterar a fixação da nota.");
-  }
-
-  return resposta.json();
+  return processarResposta(
+    resposta,
+    "Não foi possível alterar a fixação da nota.",
+  );
 }
 
-// lixeira
+export async function excluirNota(id) {
+  const resposta = await fetch(`${NOTAS_URL}/${id}`, {
+    method: "DELETE",
+    headers: criarHeaders(),
+  });
+
+  return processarResposta(
+    resposta,
+    "Não foi possível mover a nota para a lixeira.",
+  );
+}
+
 export async function listarLixeira() {
-  const resposta = await fetch(`${API_URL}/lixeira`);
+  const resposta = await fetch(`${NOTAS_URL}/lixeira`, {
+    headers: criarHeaders(),
+  });
 
-  if (!resposta.ok) {
-    throw new Error("Não foi possível carregar a lixeira.");
-  }
-
-  return resposta.json();
+  return processarResposta(resposta, "Não foi possível carregar a lixeira.");
 }
 
 export async function restaurarNota(id) {
-  const resposta = await fetch(`${API_URL}/${id}/restaurar`, {
+  const resposta = await fetch(`${NOTAS_URL}/${id}/restaurar`, {
     method: "PUT",
+    headers: criarHeaders(),
   });
 
-  if (!resposta.ok) {
-    throw new Error("Não foi possível restaurar a nota.");
-  }
-
-  return resposta.json();
+  return processarResposta(resposta, "Não foi possível restaurar a nota.");
 }
 
 export async function excluirNotaDefinitivamente(id) {
-  const resposta = await fetch(`${API_URL}/${id}/definitivo`, {
+  const resposta = await fetch(`${NOTAS_URL}/${id}/definitivo`, {
     method: "DELETE",
+    headers: criarHeaders(),
   });
 
-  if (!resposta.ok) {
-    throw new Error("Não foi possível excluir a nota definitivamente.");
-  }
+  return processarResposta(
+    resposta,
+    "Não foi possível excluir a nota definitivamente.",
+  );
 }

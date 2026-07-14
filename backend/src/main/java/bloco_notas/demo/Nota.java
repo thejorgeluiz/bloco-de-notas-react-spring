@@ -37,8 +37,14 @@ public class Nota {
     private LocalDateTime dataExclusao;
 
     @JsonIgnore
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "usuario_id")
+    @ManyToOne(
+    fetch = FetchType.LAZY,
+    optional = false
+)
+  @JoinColumn(
+    name = "usuario_id",
+    nullable = false
+)
     private Usuario usuario;
 
     @PrePersist
