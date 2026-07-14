@@ -78,4 +78,45 @@ public class AuthController {
             .status(HttpStatus.CREATED)
             .body(resposta);
     }
+
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody LoginRequest login) {
+
+        if (
+            login.email() == null ||
+            login.senha() == null ||
+            login.email().isBlank() ||
+            login.senha().isBlank()
+        ) {
+            return ResponseEntity.badRequest().body(
+                Map.of("mensagem", "Informe o e-mail e a senha.")
+            );
+        }
+
+        String email = login.email().trim().toLowerCase();
+
+        Usuario usuario = usuarioRepository
+            .findByEmail(email)
+            .orElse(null);
+
+        if (
+            usuario == null ||
+            !passwordEncoder.matches(
+                login.senha(),
+                usuario.getSenha()
+            )
+        ) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                Map.of("mensagem", "E-mail ou senha inválidos.")
+            );
+        }
+
+        UsuarioResponse resposta = new UsuarioResponse(
+            usuario.getId(),
+            usuario.getNome(),
+            usuario.getEmail()
+        );
+
+        return ResponseEntity.ok(resposta);
+    }
 }
