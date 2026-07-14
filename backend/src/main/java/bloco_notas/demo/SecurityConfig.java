@@ -18,8 +18,16 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable())
             .cors(Customizer.withDefaults())
-            .authorizeHttpRequests(autorizacao ->
-                autorizacao.anyRequest().permitAll()
+            .authorizeHttpRequests(autorizacao -> autorizacao
+                .requestMatchers(
+                    "/auth/cadastro",
+                    "/auth/login"
+                ).permitAll()
+                .requestMatchers("/auth/perfil").authenticated()
+                .anyRequest().permitAll()
+            )
+            .oauth2ResourceServer(oauth2 ->
+                oauth2.jwt(Customizer.withDefaults())
             );
 
         return http.build();
