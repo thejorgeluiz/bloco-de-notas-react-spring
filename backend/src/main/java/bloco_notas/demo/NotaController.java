@@ -3,84 +3,189 @@ package bloco_notas.demo;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 @CrossOrigin(origins = "${FRONTEND_URL:http://localhost:5173}")
 @RestController
 @RequestMapping("/notas")
 public class NotaController {
 
-    @Autowired
-    private NotaRepository repository;
+    private final NotaRepository notaRepository;
+    private final UsuarioRepository usuarioRepository;
 
-    // Cria uma nota
-    @PostMapping
-    public Nota salvar(@RequestBody Nota nota) {
-        return repository.save(nota);
-    }
-
-    // Lista somente as notas ativas
-    @GetMapping
-    public List<Nota> listar() {
-        return repository.findByExcluidaFalse();
-    }
-
-    // Lista as notas excluídas
-    @GetMapping("/lixeira")
-    public List<Nota> listarLixeira() {
-        return repository.findByExcluidaTrueOrderByDataExclusaoDesc();
-    }
-
-    // Atualiza o texto da nota e registra a data da edição
-    @PutMapping("/{id}")
-    public Nota atualizar(
-        @PathVariable Long id,
-        @RequestBody Nota notaAtualizada
+    public NotaController(
+        NotaRepository notaRepository,
+        UsuarioRepository usuarioRepository
     ) {
-        Nota nota = repository.findById(id).orElseThrow();
-
-        nota.setTexto(notaAtualizada.getTexto());
-        nota.setDataAtualizacao(LocalDateTime.now());
-
-        return repository.save(nota);
+        this.notaRepository = notaRepository;
+        this.usuarioRepository = usuarioRepository;
     }
 
-    // Fixa ou desafixa a nota
-    @PutMapping("/{id}/fixar")
-    public Nota alternarFixacao(@PathVariable Long id) {
-        Nota nota = repository.findById(id).orElseThrow();
+    @PostMapping
+    public Nota salvar(
+        @RequestBody Nota nota,
+        @AuthenticationPrincipal Jwt jwt
+    ) {
+        if (
+            nota.getTexto() == null ||
+            nota.getTexto().isBlank()
+        ) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "O texto da nota não pode estar vazio."
+            );
+        }
 
-        nota.setFixada(!Boolean.TRUE.equals(nota.getFixada()));
+        Usuario usuario = buscarUsuario(jwt);
 
-        return repository.save(nota);
+        nota.setTexto(nota.getTexto().trim());
+        nota.setUsuario(usuario);
+
+        return notaRepository.save(nota);
     }
 
-    // Move a nota para a lixeira
+    @GetMapping
+    public List<Nota> listar(
+        @AuthenticationPrincipal Jwt jwt
+    ) {
+        return notaRepository
+            .findByUsuarioIdAndExcluidaFalse(
+                obterUsuarioId(jwt)
+            );
+    }
+
+    @GetMapping("/lixeira")
+    public List<Nota> listarLixeira(
+        @AuthenticationPrincipal Jwt jwt
+    ) {
+        return notaRepository
+            .findByUsuarioIdAndExcluidaTrueOrderByDataExclusaoDesc(
+                obterUsuarioId(jwt)
+            );
+    }
+
     @DeleteMapping("/{id}")
-    public void excluir(@PathVariable Long id) {
-        Nota nota = repository.findById(id).orElseThrow();
+    public void excluir(
+        @PathVariable Long id,
+        @AuthenticationPrincipal Jwt jwt
+    ) {
+        Nota nota = buscarNotaDoUsuario(id, jwt);
 
         nota.setExcluida(true);
         nota.setDataExclusao(LocalDateTime.now());
 
-        repository.save(nota);
+        notaRepository.save(nota);
     }
 
-    // Restaura uma nota da lixeira
     @PutMapping("/{id}/restaurar")
-    public Nota restaurar(@PathVariable Long id) {
-        Nota nota = repository.findById(id).orElseThrow();
+    public Nota restaurar(
+        @PathVariable Long id,
+        @AuthenticationPrincipal Jwt jwt
+    ) {
+        Nota nota = buscarNotaDoUsuario(id, jwt);
 
         nota.setExcluida(false);
         nota.setDataExclusao(null);
 
-        return repository.save(nota);
+        return notaRepository.save(nota);
     }
 
-    // Exclui definitivamente do banco
     @DeleteMapping("/{id}/definitivo")
-    public void excluirDefinitivamente(@PathVariable Long id) {
-        repository.deleteById(id);
+    public void excluirDefinitivamente(
+        @PathVariable Long id,
+        @AuthenticationPrincipal Jwt jwt
+    ) {
+        Nota nota = buscarNotaDoUsuario(id, jwt);
+
+        notaRepository.delete(nota);
+    }
+
+    @PutMapping("/{id}")
+    public Nota atualizar(
+        @PathVariable Long id,
+        @RequestBody Nota notaAtualizada,
+        @AuthenticationPrincipal Jwt jwt
+    ) {
+        if (
+            notaAtualizada.getTexto() == null ||
+            notaAtualizada.getTexto().isBlank()
+        ) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "O texto da nota não pode estar vazio."
+            );
+        }
+
+        Nota nota = buscarNotaDoUsuario(id, jwt);
+
+        nota.setTexto(notaAtualizada.getTexto().trim());
+        nota.setDataAtualizacao(LocalDateTime.now());
+
+        return notaRepository.save(nota);
+    }
+
+    @PutMapping("/{id}/fixar")
+    public Nota alternarFixacao(
+        @PathVariable Long id,
+        @AuthenticationPrincipal Jwt jwt
+    ) {
+        Nota nota = buscarNotaDoUsuario(id, jwt);
+
+        nota.setFixada(
+            !Boolean.TRUE.equals(nota.getFixada())
+        );
+
+        return notaRepository.save(nota);
+    }
+
+    private Long obterUsuarioId(Jwt jwt) {
+        if (jwt == null || jwt.getSubject() == null) {
+            throw new ResponseStatusException(
+                HttpStatus.UNAUTHORIZED,
+                "Autenticação necessária."
+            );
+        }
+
+        return Long.valueOf(jwt.getSubject());
+    }
+
+    private Usuario buscarUsuario(Jwt jwt) {
+        return usuarioRepository
+            .findById(obterUsuarioId(jwt))
+            .orElseThrow(() ->
+                new ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED,
+                    "Usuário não encontrado."
+                )
+            );
+    }
+
+    private Nota buscarNotaDoUsuario(
+        Long notaId,
+        Jwt jwt
+    ) {
+        return notaRepository
+            .findByIdAndUsuarioId(
+                notaId,
+                obterUsuarioId(jwt)
+            )
+            .orElseThrow(() ->
+                new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "Nota não encontrada."
+                )
+            );
     }
 }
