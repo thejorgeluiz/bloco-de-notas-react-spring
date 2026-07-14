@@ -23,6 +23,14 @@ function criarHeaders(comJson = false) {
 }
 
 async function processarResposta(resposta, mensagemPadrao) {
+  if (resposta.status === 401 && obterToken()) {
+    sair();
+
+    window.location.replace("/login?sessao=expirada");
+
+    throw new Error("Sua sessão expirou.");
+  }
+
   if (!resposta.ok) {
     let mensagem = mensagemPadrao;
 
