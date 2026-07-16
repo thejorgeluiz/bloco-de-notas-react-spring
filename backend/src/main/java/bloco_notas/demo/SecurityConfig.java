@@ -29,6 +29,7 @@ public class SecurityConfig {
                 .requestMatchers(
                     "/auth/cadastro",
                     "/auth/login",
+                    "/health",
                     "/error"
                 ).permitAll()
                 .anyRequest().authenticated()
