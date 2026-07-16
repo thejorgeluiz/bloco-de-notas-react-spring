@@ -6,9 +6,10 @@ import "./index.css";
 
 import App from "./App.jsx";
 import LixeiraPage from "./pages/LixeiraPage.jsx";
-import LoginPage from "./pages/LoginPage";
-import CadastroPage from "./pages/CadastroPage";
-import RotaProtegida from "./components/RotaProtegida";
+import LoginPage from "./pages/LoginPage.jsx";
+import CadastroPage from "./pages/CadastroPage.jsx";
+import RotaProtegida from "./components/RotaProtegida.jsx";
+import ServidorDisponivel from "./components/ServidorDisponivel.jsx";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
@@ -22,6 +23,7 @@ createRoot(document.getElementById("root")).render(
             </RotaProtegida>
           }
         />
+
         <Route
           path="/lixeira"
           element={
@@ -30,8 +32,24 @@ createRoot(document.getElementById("root")).render(
             </RotaProtegida>
           }
         />
-        <Route path="/cadastro" element={<CadastroPage />} />
-        <Route path="/login" element={<LoginPage />} />
+
+        <Route
+          path="/cadastro"
+          element={
+            <ServidorDisponivel>
+              <CadastroPage />
+            </ServidorDisponivel>
+          }
+        />
+
+        <Route
+          path="/login"
+          element={
+            <ServidorDisponivel>
+              <LoginPage />
+            </ServidorDisponivel>
+          }
+        />
       </Routes>
     </BrowserRouter>
   </StrictMode>,
