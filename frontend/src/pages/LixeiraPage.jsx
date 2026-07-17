@@ -5,7 +5,14 @@ import {
   excluirNotaDefinitivamente,
   listarLixeira,
   restaurarNota,
+  usuarioEstaLogado,
 } from "../services/api";
+
+import {
+  excluirNotaLocalDefinitivamente,
+  listarLixeiraLocal,
+  restaurarNotaLocal,
+} from "../services/notasLocais";
 
 import BarraTopo from "../components/BarraTopo";
 import Notificacao from "../components/Notificacao";
@@ -14,6 +21,8 @@ import NotaExcluidaItem from "../components/NotaExcluidaItem";
 function LixeiraPage() {
   const [notas, setNotas] = useState([]);
   const [carregando, setCarregando] = useState(true);
+
+  const modoVisitante = !usuarioEstaLogado();
 
   const [notificacao, setNotificacao] = useState({
     mostrar: false,
@@ -33,7 +42,10 @@ function LixeiraPage() {
     try {
       setCarregando(true);
 
-      const dados = await listarLixeira();
+      const dados = modoVisitante
+        ? listarLixeiraLocal()
+        : await listarLixeira();
+
       setNotas(dados);
     } catch (error) {
       exibirNotificacao(error.message, "danger");
@@ -44,7 +56,12 @@ function LixeiraPage() {
 
   async function restaurar(id) {
     try {
-      await restaurarNota(id);
+      if (modoVisitante) {
+        restaurarNotaLocal(id);
+      } else {
+        await restaurarNota(id);
+      }
+
       await carregarLixeira();
 
       exibirNotificacao("Nota restaurada com sucesso!", "success");
@@ -63,7 +80,12 @@ function LixeiraPage() {
     }
 
     try {
-      await excluirNotaDefinitivamente(id);
+      if (modoVisitante) {
+        excluirNotaLocalDefinitivamente(id);
+      } else {
+        await excluirNotaDefinitivamente(id);
+      }
+
       await carregarLixeira();
 
       exibirNotificacao("Nota excluída definitivamente.", "success");
@@ -88,6 +110,13 @@ function LixeiraPage() {
             ← Voltar
           </Link>
         </div>
+
+        {modoVisitante && (
+          <div className="alert alert-info">
+            Esta é sua lixeira local. Os dados ficam salvos somente neste
+            navegador.
+          </div>
+        )}
 
         {carregando && (
           <div className="text-center my-5">

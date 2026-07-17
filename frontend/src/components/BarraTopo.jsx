@@ -1,15 +1,15 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Container, Dropdown, Navbar } from "react-bootstrap";
 
 import { obterUsuarioLogado, sair } from "../services/api";
 
 function BarraTopo() {
-  const navigate = useNavigate();
   const usuario = obterUsuarioLogado();
 
   function sairDoSistema() {
     sair();
-    navigate("/login", { replace: true });
+
+    window.location.replace("/");
   }
 
   return (
@@ -20,9 +20,13 @@ function BarraTopo() {
         </Navbar.Brand>
 
         <div className="d-flex align-items-center gap-3">
-          {usuario && (
+          {usuario ? (
             <Navbar.Text className="d-none d-sm-block">
               Olá, {usuario.nome}
+            </Navbar.Text>
+          ) : (
+            <Navbar.Text className="d-none d-sm-block">
+              Modo visitante
             </Navbar.Text>
           )}
 
@@ -37,7 +41,7 @@ function BarraTopo() {
             </Dropdown.Toggle>
 
             <Dropdown.Menu>
-              {usuario && (
+              {usuario ? (
                 <>
                   <Dropdown.Header>
                     <div>{usuario.nome}</div>
@@ -45,22 +49,47 @@ function BarraTopo() {
                   </Dropdown.Header>
 
                   <Dropdown.Divider />
+
+                  <Dropdown.Item as={Link} to="/">
+                    📝 Minhas notas
+                  </Dropdown.Item>
+
+                  <Dropdown.Item as={Link} to="/lixeira">
+                    🗑️ Excluídos
+                  </Dropdown.Item>
+
+                  <Dropdown.Divider />
+
+                  <Dropdown.Item
+                    className="text-danger"
+                    onClick={sairDoSistema}
+                  >
+                    🚪 Sair
+                  </Dropdown.Item>
+                </>
+              ) : (
+                <>
+                  <Dropdown.Header>Modo visitante</Dropdown.Header>
+
+                  <Dropdown.Item as={Link} to="/">
+                    📝 Notas locais
+                  </Dropdown.Item>
+
+                  <Dropdown.Item as={Link} to="/lixeira">
+                    🗑️ Excluídos
+                  </Dropdown.Item>
+                  
+                  <Dropdown.Divider />
+
+                  <Dropdown.Item as={Link} to="/login">
+                    🔑 Entrar
+                  </Dropdown.Item>
+
+                  <Dropdown.Item as={Link} to="/cadastro">
+                    👤 Criar conta
+                  </Dropdown.Item>
                 </>
               )}
-
-              <Dropdown.Item as={Link} to="/">
-                📝 Minhas notas
-              </Dropdown.Item>
-
-              <Dropdown.Item as={Link} to="/lixeira">
-                🗑️ Excluídos
-              </Dropdown.Item>
-
-              <Dropdown.Divider />
-
-              <Dropdown.Item className="text-danger" onClick={sairDoSistema}>
-                🚪 Sair
-              </Dropdown.Item>
             </Dropdown.Menu>
           </Dropdown>
         </div>

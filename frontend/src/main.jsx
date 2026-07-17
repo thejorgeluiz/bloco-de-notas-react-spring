@@ -8,30 +8,15 @@ import App from "./App.jsx";
 import LixeiraPage from "./pages/LixeiraPage.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import CadastroPage from "./pages/CadastroPage.jsx";
-import RotaProtegida from "./components/RotaProtegida.jsx";
 import ServidorDisponivel from "./components/ServidorDisponivel.jsx";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>
       <Routes>
-        <Route
-          path="/"
-          element={
-            <RotaProtegida>
-              <App />
-            </RotaProtegida>
-          }
-        />
+        <Route path="/" element={<App />} />
 
-        <Route
-          path="/lixeira"
-          element={
-            <RotaProtegida>
-              <LixeiraPage />
-            </RotaProtegida>
-          }
-        />
+        <Route path="/lixeira" element={<LixeiraPage />} />
 
         <Route
           path="/cadastro"
